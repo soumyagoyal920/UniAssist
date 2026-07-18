@@ -5,7 +5,7 @@ UniAssist is a domain specific chatbot built using RAG (retrieval augmented gene
 
 # More About The Project
 ## Problem
-Students frequently spend significant time searching through multiple university websites, PDFs, and notices to find accurate information regarding admissions, examinations, attendance policies, fee structures, scholarships, hostel facilities, and other academic services.
+Students frequently spend significant time searching through multiple university websites, PDFs, and notices to find accurate information regarding admissions.
 
 Traditional AI chatbots may generate inaccurate or misleading answers because they rely on general internet knowledge instead of institution-specific information.
 
