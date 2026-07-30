@@ -32,8 +32,8 @@ Our chatbot unlike an open-domain LLM which pulls generalized data from the inte
 - FastAPI
 ## AI & Machine Learning
 - LangChain
-- Google Gemini API (or another LLM)
-- Hugging Face Sentence Transformers
+- Groq
+- JINA Embeddings
 - FAISS Vector Database
 ## Database
 - SQLite / PostgreSQL
