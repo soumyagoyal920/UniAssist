@@ -17,9 +17,8 @@ Our chatbot unlike an open-domain LLM which pulls generalized data from the inte
 ![Architecture Diagram](./src/flowchart%20project.png)
 ----
 # RAG Pipeline
-<img width="1003" height="505" alt="image" src="https://github.com/user-attachments/assets/464138d0-f759-4ac2-b73d-f210c54f6a10" />
+<img width="1211" height="924" alt="image" src="https://github.com/user-attachments/assets/0adb381f-d82d-44ad-9cb3-807343ec80bb" />
 
-<img width="1211" height="924" alt="image" src="https://github.com/user-attachments/assets/9bb5fe6e-7dd9-42db-a719-a4741c539f47" />
 
 # Tech Stack
 ## Frontend
