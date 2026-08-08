@@ -7,3 +7,24 @@ langchain
 langchain-community
 langchain-google-genai
 faiss-cpu
+python-dotenv
+
+langchain
+langchain-core 
+langchain-community
+
+
+##LLM provider
+langchain-groq
+langchain-text-splitters
+
+#vector database
+faiss-cpu
+
+#notebook
+jupyter
+ipykernel
+
+#web app 
+streamlit
+

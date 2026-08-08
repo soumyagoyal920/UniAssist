@@ -4,3 +4,8 @@ venv/
 .venv/
 __pycache__/
 .DS_Store
+__pycache__/
+*.pyc
+.venv/
+.env
+data/faiss_index/
