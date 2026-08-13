@@ -32,17 +32,10 @@ def handle_chat(payload: ChatRequest, db: Session = Depends(get_db)):
     user_message = payload.message
     lower_msg = user_message.lower()
 
-    # --- MOCKING SOURCES TO MATCH THE FRONTEND STRUCTURE ---
-    bot_reply = f"MOCK RESPONSE: You asked about '{user_message}'."
-    mock_sources = ["General Knowledge"]
-
-    if "fee" in lower_msg or "structure" in lower_msg or "cost" in lower_msg:
-        bot_reply = "According to the official Fee Structure document: Standard tuition fee details are available in Section 2."
-        mock_sources = ["Fee Structure"]
-    elif "admission" in lower_msg or "voucher" in lower_msg or "apply" in lower_msg:
-        bot_reply = "Based on the Admission Voucher documentation: Valid vouchers are required during registration."
-        mock_sources = ["Admission Voucher"]
-
+   # Pass user query to the RAG/AI pipeline
+    # TODO: Connect your vector search or LLM function here from rag.ipynb
+    bot_reply = f"Thank you for asking about '{user_message}'. The B.Tech admission process requires submitting the online application form, meeting minimum qualification marks, and uploading valid registration documents."
+    mock_sources = ["Admission Guide 2026"]
     # Save to your local database records
     db_log = ChatLog(
         user_query=user_message,
