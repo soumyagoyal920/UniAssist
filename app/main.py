@@ -5,7 +5,8 @@ from sqlalchemy.orm import Session
 from dotenv import load_dotenv
 
 # Import your database models/schemas from your project structure
-from .database import get_db, ChatLog
+from .database import get_db
+from .models import ChatLog
 from .schemas import ChatRequest, ChatResponse
 from UniAssist.pipeline import build_UniAssist_agent, ask_agent
 
