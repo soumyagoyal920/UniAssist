@@ -94,16 +94,33 @@ export default function App() {
     setHistory((prev) => [userText, ...prev]);
     setInput('');
 
-    setTimeout(() => {
-      setMessages((prev) => [
-        ...prev,
-        {
-          sender: 'bot',
-          text: `Here is the relevant information regarding "${userText}" from the Amity Admission Voucher.`,
-          citation: 'Amity_Admission_Voucher_2026.pdf',
-        },
-      ]);
-    }, 800);
+    fetch('https://uniassist-backend-lh6z.onrender.com/api/chat', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ message: userText, question: userText }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setMessages((prev) => [
+          ...prev,
+          {
+            sender: 'bot',
+            text: data.bot_response || data.response || data.answer || 'No response received.',
+          },
+        ]);
+      })
+      .catch((err) => {
+        console.error(err);
+        setMessages((prev) => [
+          ...prev,
+          {
+            sender: 'bot',
+            text: 'Error connecting to backend server.',
+          },
+        ]);
+      });
   };
 
   return (
