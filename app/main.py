@@ -64,5 +64,6 @@ def handle_chat(payload: ChatRequest, db: Session = Depends(get_db)):
         id=db_log.id,
         user_query=db_log.user_query,
         bot_response=db_log.bot_response,
-        sources=mock_sources
+        sources=mock_sources,
+        timestamp=db_log.timestamp
     )
