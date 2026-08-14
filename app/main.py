@@ -13,6 +13,15 @@ from UniAssist.pipeline import build_UniAssist_agent, ask_agent
 
 load_dotenv()
 app = FastAPI()
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # fine for now; tighten to your real frontend URL later
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 models.Base.metadata.create_all(bind=engine)   # creates chat_logs table if missing
 
