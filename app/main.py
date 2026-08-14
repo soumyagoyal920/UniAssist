@@ -5,13 +5,17 @@ from sqlalchemy.orm import Session
 from dotenv import load_dotenv
 
 # Import your database models/schemas from your project structure
-from .database import get_db
+from .database import get_db, engine
 from .models import ChatLog
+from . import models
 from .schemas import ChatRequest, ChatResponse
 from UniAssist.pipeline import build_UniAssist_agent, ask_agent
 
 load_dotenv()
 app = FastAPI()
+
+models.Base.metadata.create_all(bind=engine)   # creates chat_logs table if missing
+
 
 # Build the RAG agent ONCE at startup (not per-request — that would be slow)
 agent = None
