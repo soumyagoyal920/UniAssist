@@ -49,10 +49,10 @@ def handle_chat(payload: ChatRequest, db: Session = Depends(get_db)):
 
     # 1. Try calling the RAG agent (this actually searches your PDF)
     if agent is None:
-    raise HTTPException(
-        status_code=503,
-        detail="RAG agent is unavailable."
-    )
+        raise HTTPException(
+            status_code=503,
+            detail="RAG agent is unavailable."
+        )
 
     try:
         bot_reply = ask_agent(agent, user_message)
@@ -63,10 +63,8 @@ def handle_chat(payload: ChatRequest, db: Session = Depends(get_db)):
             status_code=500,
             detail="Failed to generate response from RAG."
         )
-    else:
-        # Fallback if agent failed to initialize (e.g. missing API keys on Render)
-        bot_reply = f"Thank you for asking about '{user_message}'. The B.Tech admission process requires submitting the online application form and uploading valid registration documents."
-        mock_sources = ["Admission Guide 2026"]
+    mock_sources = ["UniAssist Knowledge Base"]
+    
 
     # 2. Save log to database
     db_log = ChatLog(
