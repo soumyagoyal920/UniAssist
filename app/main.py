@@ -11,13 +11,16 @@ from . import models
 from .schemas import ChatRequest, ChatResponse
 from UniAssist.pipeline import build_UniAssist_agent, ask_agent
 
+from fastapi.middleware.cors import CORSMiddleware
+
 load_dotenv()
 app = FastAPI()
-from fastapi.middleware.cors import CORSMiddleware
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # fine for now; tighten to your real frontend URL later
+    allow_origins=[
+        "http://localhost:3000",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -45,14 +48,21 @@ def handle_chat(payload: ChatRequest, db: Session = Depends(get_db)):
     user_message = payload.message
 
     # 1. Try calling the RAG agent (this actually searches your PDF)
-    if agent:
-        try:
-            bot_reply = ask_agent(agent, user_message)
-            mock_sources = ["UniAssist Knowledge Base"]
-        except Exception as e:
-            print(f"Agent error: {e}")
-            bot_reply = f"Thank you for asking about '{user_message}'. The B.Tech admission process requires submitting the online application form and uploading valid registration documents."
-            mock_sources = ["Admission Guide 2026"]
+    if agent is None:
+    raise HTTPException(
+        status_code=503,
+        detail="RAG agent is unavailable."
+    )
+
+    try:
+        bot_reply = ask_agent(agent, user_message)
+    except Exception as e:
+        print(f"Agent error: {e}")
+
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to generate response from RAG."
+        )
     else:
         # Fallback if agent failed to initialize (e.g. missing API keys on Render)
         bot_reply = f"Thank you for asking about '{user_message}'. The B.Tech admission process requires submitting the online application form and uploading valid registration documents."
