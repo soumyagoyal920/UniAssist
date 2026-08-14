@@ -3,23 +3,22 @@ import json
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 from dotenv import load_dotenv
-from langchain_groq import ChatGroq
 
 # Import your database models/schemas from your project structure
 from .database import get_db, ChatLog
 from .schemas import ChatRequest, ChatResponse
+from UniAssist.pipeline import build_UniAssist_agent, ask_agent
 
 load_dotenv()
-
 app = FastAPI()
 
-# Initialize Groq Model
-groq_api_key = os.getenv("GROQ_API_KEY")
-llm = ChatGroq(
-    model="openai/gpt-oss-120b",
-    temperature=0.2,
-    groq_api_key=groq_api_key
-) if groq_api_key else None
+# Build the RAG agent ONCE at startup (not per-request — that would be slow)
+agent = None
+try:
+    agent = build_UniAssist_agent()
+    print("UniAssist RAG agent initialized successfully.")
+except Exception as e:
+    print(f"Failed to initialize UniAssist agent: {e}")
 
 
 @app.get("/")
@@ -31,18 +30,17 @@ def read_root():
 def handle_chat(payload: ChatRequest, db: Session = Depends(get_db)):
     user_message = payload.message
 
-    # 1. Try calling the AI model directly
-    if llm:
+    # 1. Try calling the RAG agent (this actually searches your PDF)
+    if agent:
         try:
-            response = llm.invoke(user_message)
-            bot_reply = response.content
+            bot_reply = ask_agent(agent, user_message)
             mock_sources = ["UniAssist Knowledge Base"]
         except Exception as e:
-            # Fallback if API rate limits or network issues occur
+            print(f"Agent error: {e}")
             bot_reply = f"Thank you for asking about '{user_message}'. The B.Tech admission process requires submitting the online application form and uploading valid registration documents."
             mock_sources = ["Admission Guide 2026"]
     else:
-        # Fallback if GROQ_API_KEY is not yet added to Render
+        # Fallback if agent failed to initialize (e.g. missing API keys on Render)
         bot_reply = f"Thank you for asking about '{user_message}'. The B.Tech admission process requires submitting the online application form and uploading valid registration documents."
         mock_sources = ["Admission Guide 2026"]
 
