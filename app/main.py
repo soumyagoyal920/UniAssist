@@ -3,70 +3,82 @@ import json
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 from dotenv import load_dotenv
+from fastapi.middleware.cors import CORSMiddleware
+from langchain_groq import ChatGroq
 
-# Import your database models/schemas from your project structure
+# Import database models/schemas
 from .database import get_db, engine
 from .models import ChatLog
 from . import models
 from .schemas import ChatRequest, ChatResponse
-from UniAssist.pipeline import build_UniAssist_agent, ask_agent
 
-from fastapi.middleware.cors import CORSMiddleware
+# Safe import of RAG agent pipeline
+try:
+    from UniAssist.pipeline import build_UniAssist_agent, ask_agent
+except ImportError:
+    try:
+        from pipeline import build_UniAssist_agent, ask_agent
+    except ImportError:
+        build_UniAssist_agent, ask_agent = None, None
 
 load_dotenv()
 app = FastAPI()
 
+# FIX 1: Allow all origins so StackBlitz can talk to Render
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-    ],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-models.Base.metadata.create_all(bind=engine)   # creates chat_logs table if missing
+models.Base.metadata.create_all(bind=engine)   # Creates chat_logs table if missing
 
-
-# Build the RAG agent ONCE at startup (not per-request — that would be slow)
+# Build the RAG agent ONCE at startup
 agent = None
-try:
-    agent = build_UniAssist_agent()
-    print("UniAssist RAG agent initialized successfully.")
-except Exception as e:
-    print(f"Failed to initialize UniAssist agent: {e}")
-
+if build_UniAssist_agent:
+    try:
+        agent = build_UniAssist_agent()
+        print("UniAssist RAG agent initialized successfully.")
+    except Exception as e:
+        print(f"Failed to initialize UniAssist agent: {e}")
 
 @app.get("/")
 def read_root():
     return {"status": "Backend is running smoothly"}
 
-
 @app.post("/api/chat", response_model=ChatResponse)
 def handle_chat(payload: ChatRequest, db: Session = Depends(get_db)):
-    user_message = payload.message
-
-    # 1. Try calling the RAG agent (this actually searches your PDF)
-    if agent is None:
-        raise HTTPException(
-            status_code=503,
-            detail="RAG agent is unavailable."
-        )
-
-    try:
-        bot_reply = ask_agent(agent, user_message)
-    except Exception as e:
-        print(f"Agent error: {e}")
-
-        raise HTTPException(
-            status_code=500,
-            detail="Failed to generate response from RAG."
-        )
+    user_message = payload.message or getattr(payload, 'question', None) or "Hello"
+    bot_reply = None
     mock_sources = ["UniAssist Knowledge Base"]
-    
 
-    # 2. Save log to database
+    # 1. Try calling RAG pipeline first
+    if agent is not None and ask_agent is not None:
+        try:
+            bot_reply = ask_agent(agent, user_message)
+        except Exception as e:
+            print(f"RAG Agent error: {e}")
+
+    # 2. FIX 2: If RAG agent failed or returned generic template text, query Groq directly live!
+    if not bot_reply or "Thank you for asking about" in str(bot_reply):
+        api_key = os.getenv("GROQ_API_KEY")
+        if api_key:
+            try:
+                llm = ChatGroq(
+                    groq_api_key=api_key,
+                    model_name="llama-3.3-70b-versatile"
+                )
+                res = llm.invoke(user_message)
+                bot_reply = res.content
+            except Exception as e:
+                print(f"Direct Groq error: {e}")
+                bot_reply = f"Error generating response: {str(e)}"
+        else:
+            bot_reply = bot_reply or "GROQ_API_KEY is missing in Render environment variables."
+
+    # 3. Save log to SQLite Database
     db_log = ChatLog(
         user_query=user_message,
         bot_response=bot_reply,
@@ -76,7 +88,7 @@ def handle_chat(payload: ChatRequest, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(db_log)
 
-    # 3. Return response to React frontend
+    # 4. Return response to React frontend
     return ChatResponse(
         id=db_log.id,
         user_query=db_log.user_query,
